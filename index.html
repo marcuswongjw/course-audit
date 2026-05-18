@@ -204,14 +204,11 @@
         <div style="overflow-x:auto">
         <table>
           <thead><tr>
-            <th style="width:11%">TGS No.</th>
-            <th style="width:24%">Course name</th>
-            <th style="width:8%">Tier</th>
-            <th style="width:13%">Archetype</th>
-            <th style="width:14%">Next run</th>
-            <th style="width:7%">Fee</th>
-            <th style="width:12%">Auditors</th>
-            <th style="width:11%">Action</th>
+            <th style="width:38%">Course name</th>
+            <th style="width:10%">Tier</th>
+            <th style="width:20%">Archetype</th>
+            <th style="width:18%">Auditors</th>
+            <th style="width:14%">Action</th>
           </tr></thead>
           <tbody id="courseBody"><tr><td colspan="8" class="empty">Loading…</td></tr></tbody>
         </table>
@@ -290,9 +287,9 @@
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://bmblkyfoarmyxtnzzibd.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtYmxreWZvYXJteXh0bnp6aWJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDU1NzMsImV4cCI6MjA5NDYyMTU3M30.TcFcBWJd54ce6NZqlFLWPse-RrJFi_L8MQ4HO9rjZyo';
-const ADMIN_EMAILS = ['marcus_wong@ssg.gov.sg']; // ← your admin email(s) here
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const ADMIN_EMAILS = ['admin@yourdomain.com']; // ← your admin email(s) here
 // ─────────────────────────────────────────────────────────────────────────────
 
 const {createClient} = supabase;
@@ -382,7 +379,7 @@ function renderCourses(){
     return true;
   });
   const tbody=document.getElementById('courseBody');
-  if(!list.length){tbody.innerHTML='<tr><td colspan="8" class="empty">No courses match your filters.</td></tr>';return;}
+  if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No courses match your filters.</td></tr>';return;}
   tbody.innerHTML=list.map(c=>{
     const cas=auditsForCourse(c.id);
     const names=cas.map(a=>profiles.find(p=>p.id===a.user_id)?.full_name||'').filter(Boolean);
@@ -397,12 +394,9 @@ function renderCourses(){
     else btn='<span class="badge b-done">Submitted</span>';
     const audDisplay=names.length?`<span title="${names.join(', ')}">${names.length===1?names[0]:names.length+' auditors'}</span>`:'<span style="color:var(--text3)">—</span>';
     return`<tr>
-      <td style="font-size:10px;color:var(--text2)">${c.tgs_number}</td>
       <td>${c.name}</td>
       <td>${pickBadge}</td>
       <td>${archBadge}</td>
-      <td style="font-size:11px;color:var(--text2)">${c.next_run||'<span style="color:var(--text3)">TBC</span>'}</td>
-      <td style="font-size:11px">${c.course_fee||'<span style="color:var(--text3)">—</span>'}</td>
       <td style="font-size:11px">${audDisplay}<br><span class="badge ${stCls}" style="margin-top:3px">${c.status}</span></td>
       <td>${btn}</td>
     </tr>`;
