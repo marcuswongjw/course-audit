@@ -329,23 +329,53 @@ function showAuthMsg(m,cls){const el=document.getElementById('authMsg');el.class
 
 db.auth.onAuthStateChange(async(event,session)=>{
   if(session){
-    currentUser=session.user;
-    const isAdmin=ADMIN_EMAILS.includes(currentUser.email);
-    currentProfile={id:currentUser.id,full_name:currentUser.user_metadata?.full_name||currentUser.email,is_admin:isAdmin};
-    document.getElementById('sidebarName').textContent=currentProfile.full_name;
-    if(isAdmin)document.getElementById('adminNav').style.display='';
-    document.getElementById('authScreen').style.display='none';
-    document.getElementById('mainApp').style.display='flex';
-    await loadAll();
+    await initApp(session);
   }
 });
 
+// Also check for existing session on page load (fixes GitHub Pages timing issue)
+(async()=>{
+  const{data:{session}}=await db.auth.getSession();
+  if(session) await initApp(session);
+})();
+
+async function initApp(session){
+  if(currentUser) return; // already initialised
+  currentUser=session.user;
+  const isAdmin=ADMIN_EMAILS.includes(currentUser.email);
+  currentProfile={id:currentUser.id,full_name:currentUser.user_metadata?.full_name||currentUser.email,is_admin:isAdmin};
+  document.getElementById('sidebarName').textContent=currentProfile.full_name;
+  if(isAdmin)document.getElementById('adminNav').style.display='';
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('mainApp').style.display='flex';
+  await loadAll();
+}
+
 // ── DATA ──────────────────────────────────────────────────────────────────────
-async function loadAll(){await Promise.all([loadCourses(),loadProfiles(),loadAvailability(),loadAudits()]);renderAll();}
-async function loadCourses(){const{data}=await db.from('courses').select('*').order('pick').order('name');courses=data||[];}
-async function loadProfiles(){const{data}=await db.from('profiles').select('*');profiles=data||[];}
-async function loadAvailability(){const{data}=await db.from('availability').select('*');availability={};(data||[]).forEach(r=>{availability[r.user_id]=r.days||[];});}
-async function loadAudits(){const{data}=await db.from('audits').select('*');audits={};(data||[]).forEach(r=>{audits[r.course_id+'__'+r.user_id]=r;});}
+async function loadAll(){
+  const[r1,r2,r3,r4]=await Promise.all([loadCourses(),loadProfiles(),loadAvailability(),loadAudits()]);
+  renderAll();
+}
+async function loadCourses(){
+  const{data,error}=await db.from('courses').select('*').order('pick').order('name');
+  if(error){console.error('loadCourses error:',error);return;}
+  courses=data||[];
+}
+async function loadProfiles(){
+  const{data,error}=await db.from('profiles').select('*');
+  if(error){console.error('loadProfiles error:',error);return;}
+  profiles=data||[];
+}
+async function loadAvailability(){
+  const{data,error}=await db.from('availability').select('*');
+  if(error){console.error('loadAvailability error:',error);return;}
+  availability={};(data||[]).forEach(r=>{availability[r.user_id]=r.days||[];});
+}
+async function loadAudits(){
+  const{data,error}=await db.from('audits').select('*');
+  if(error){console.error('loadAudits error:',error);return;}
+  audits={};(data||[]).forEach(r=>{audits[r.course_id+'__'+r.user_id]=r;});
+}
 
 function auditsForCourse(cid){return Object.values(audits).filter(a=>a.course_id===cid);}
 function myAudit(cid){return audits[cid+'__'+currentUser?.id];}
